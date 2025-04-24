@@ -11,8 +11,8 @@ cd curling_league_manager
 2. Create a virtual environment and install dependencies
 ```bash
 python3 -m venv venv
-source venv/bin/activate     #macOS/Linux
-venv\Scripts\activate.bat  # Windows
+source venv/bin/activate     # macOS/Linux
+venv\Scripts\activate.bat    # Windows
 pip install -r requirements.txt
 ```
 
