@@ -1,4 +1,8 @@
 # curling_league_manager/gui/league_editor.py
+import json
+from pathlib import Path
+from curling_league_manager.core.database import dataclass_to_dict
+from curling_league_manager.core.models import Team, Member
 from PyQt5.QtWidgets import QDialog, QListWidget, QPushButton, QHBoxLayout, QVBoxLayout, QWidget, QFileDialog, QInputDialog, QMessageBox
 from curling_league_manager.gui.team_editor import TeamEditorDialog
 
@@ -62,14 +66,26 @@ class LeagueEditorDialog(QDialog):
             del self.league.teams[idx]
             self._refresh_list()
 
-    def _import(self):
+        def _import(self):
         path, _ = QFileDialog.getOpenFileName(self, "Import Teams", "", "JSON Files (*.json)")
-        if path:
-            # implement import logic...
-            pass
+        if not path:
+            return
+        # Load list of team-dicts from JSON
+        data = json.loads(Path(path).read_text())
+        # Rebuild Team and Member objects
+        self.league.teams = []
+        for team_dict in data:
+            team = Team(id=team_dict.get("id"), name=team_dict["name"])
+            # reconstruct members
+            for m in team_dict.get("members", []):
+                team.members.append(Member(id=m.get("id"), name=m["name"], email=m["email"]))
+            self.league.teams.append(team)
+        self._refresh_list()
 
     def _export(self):
         path, _ = QFileDialog.getSaveFileName(self, "Export Teams", "", "JSON Files (*.json)")
-        if path:
-            # implement export logic...
-            pass
+        if not path:
+            return
+        # Convert each Team (+ members) into plain dicts
+        data = [dataclass_to_dict(team) for team in self.league.teams]
+        Path(path).write_text(json.dumps(data, indent=2))
