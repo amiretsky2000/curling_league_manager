@@ -3,7 +3,10 @@ import json
 from pathlib import Path
 from curling_league_manager.core.database import dataclass_to_dict
 from curling_league_manager.core.models import Team, Member
-from PyQt5.QtWidgets import QDialog, QListWidget, QPushButton, QHBoxLayout, QVBoxLayout, QWidget, QFileDialog, QInputDialog, QMessageBox
+from PyQt5.QtWidgets import (
+    QDialog, QListWidget, QPushButton, QHBoxLayout,
+    QVBoxLayout, QFileDialog, QInputDialog, QMessageBox
+)
 from curling_league_manager.gui.team_editor import TeamEditorDialog
 
 class LeagueEditorDialog(QDialog):
@@ -18,9 +21,9 @@ class LeagueEditorDialog(QDialog):
         self.list_widget = QListWidget()
         import_btn = QPushButton("Import Teams…")
         export_btn = QPushButton("Export Teams…")
-        add_btn    = QPushButton("Add Team")
-        edit_btn   = QPushButton("Edit Team")
-        del_btn    = QPushButton("Delete Team")
+        add_btn = QPushButton("Add Team")
+        edit_btn = QPushButton("Edit Team")
+        del_btn = QPushButton("Delete Team")
 
         import_btn.clicked.connect(self._import)
         export_btn.clicked.connect(self._export)
@@ -45,29 +48,36 @@ class LeagueEditorDialog(QDialog):
     def _add(self):
         name, ok = QInputDialog.getText(self, "Add Team", "Team name:")
         if ok and name.strip():
-            from curling_league_manager.core.models import Team
             self.league.teams.append(Team(name=name.strip()))
             self._refresh_list()
 
     def _edit(self):
         idx = self.list_widget.currentRow()
-        if idx < 0: return
+        if idx < 0:
+            return
         dlg = TeamEditorDialog(self.league.teams[idx], parent=self)
         dlg.exec_()
         self._refresh_list()
 
     def _delete(self):
         idx = self.list_widget.currentRow()
-        if idx < 0: return
+        if idx < 0:
+            return
         team = self.league.teams[idx]
-        if QMessageBox.question(self, "Delete Team",
-           f"Delete team '{team.name}'?", QMessageBox.Yes|QMessageBox.No
-        ) == QMessageBox.Yes:
+        confirm = QMessageBox.question(
+            self,
+            "Delete Team",
+            f"Delete team '{team.name}'?",
+            QMessageBox.Yes | QMessageBox.No
+        )
+        if confirm == QMessageBox.Yes:
             del self.league.teams[idx]
             self._refresh_list()
 
-        def _import(self):
-        path, _ = QFileDialog.getOpenFileName(self, "Import Teams", "", "JSON Files (*.json)")
+    def _import(self):
+        path, _ = QFileDialog.getOpenFileName(
+            self, "Import Teams", "", "JSON Files (*.json)"
+        )
         if not path:
             return
         # Load list of team-dicts from JSON
@@ -76,14 +86,21 @@ class LeagueEditorDialog(QDialog):
         self.league.teams = []
         for team_dict in data:
             team = Team(id=team_dict.get("id"), name=team_dict["name"])
-            # reconstruct members
             for m in team_dict.get("members", []):
-                team.members.append(Member(id=m.get("id"), name=m["name"], email=m["email"]))
+                team.members.append(
+                    Member(
+                        id=m.get("id"),
+                        name=m["name"],
+                        email=m["email"]
+                    )
+                )
             self.league.teams.append(team)
         self._refresh_list()
 
     def _export(self):
-        path, _ = QFileDialog.getSaveFileName(self, "Export Teams", "", "JSON Files (*.json)")
+        path, _ = QFileDialog.getSaveFileName(
+            self, "Export Teams", "", "JSON Files (*.json)"
+        )
         if not path:
             return
         # Convert each Team (+ members) into plain dicts
